@@ -26,7 +26,7 @@ const port = 3000;
 
 // Middleware
 server.use(express.json());
-server.use(cors({ origin: 'http://localhost:5173' }));
+server.use(cors({ origin: 'https://blog-web-site-28dx.onrender.com' }));
 
 // Connect to MongoDB
 mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
