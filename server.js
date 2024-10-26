@@ -29,7 +29,7 @@ server.use(express.json());
 server.use(cors({ origin: 'http://localhost:5173' }));
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB || 'mongodb://127.0.0.1:27017/local', {
+mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 }).then(() => {
