@@ -13,7 +13,7 @@ import aws from 'aws-sdk';
 import Blog from './Schema/Blog.js';
 import Notification from './Schema/Notification.js';
 import Comment from './Schema/Comment.js';
-import { body, validationResult } from 'express-validator';
+//import { body, validationResult } from 'express-validator';
 
 // Initialize Firebase Admin SDK
 admin.initializeApp({
@@ -24,8 +24,8 @@ admin.initializeApp({
 const server = express();
 const port = 3000;
 //express-validator
-const server= express();
-server.use(express.json());
+//const server= express();
+//server.use(express.json());
 
 // Middleware
 server.use(express.json());
@@ -108,17 +108,50 @@ server.get('/get-upload-url', async (req, res) => {
     }
 });
 
-server.post("/signup", [
-    body('fullname').isLength({ min: 3 }).withMessage('Fullname must be at least 3 letters long'),
-    body('email').isEmail().withMessage('Enter a valid email'),
-    body('password').matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/).withMessage('Invalid password')
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+//server.post("/signup", [
+//    body('fullname').isLength({ min: 3 }).withMessage('Fullname must be at least 3 letters long'),
+//    body('email').isEmail().withMessage('Enter a valid email'),
+//    body('password').matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/).withMessage('Invalid password')
+//], async (req, res) => {
+ //   const errors = validationResult(req);
+ //   if (!errors.isEmpty()) {
+ //       return res.status(400).json({ errors: errors.array() });
+ //   }
 
-    const { fullname, email, password } = req.body;
+ //   const { fullname, email, password } = req.body;
+
+//   try {
+ //       const existingUser = await User.findOne({ "personal_info.email": email });
+ //       if (existingUser) return res.status(409).json({ error: "Already have an account" });
+
+ //       const hashed_password = await bcrypt.hash(password, 10);
+ //       const username = await generateUsername(email);
+
+ //       const user = new User({ personal_info: { fullname, email, password: hashed_password, username } });
+ //       await user.save();
+ //       return res.status(201).json(formatDataToSend(user));
+//    } catch (err) {
+//        return res.status(500).json({ error: err.message });
+ //   }
+//});
+server.post("/signup", async (req, res) => {
+   const { fullname, email, password } = req.body;
+
+    // Manual Validation
+   const errors = [];
+
+    if (!fullname || fullname.length > 3) {
+        errors.push("Fullname must be at least 3 letters long.");
+    }
+    if (!email || !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email)) {
+       errors.push("Enter a valid email.");
+    }
+      if (!password || !/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/.test(password)) {
+        errors.push("Invalid password.");
+    }
+    if (errors.length > 0) {
+        return res.status(400).json({ errors });
+    }
 
     try {
         const existingUser = await User.findOne({ "personal_info.email": email });
@@ -127,101 +160,68 @@ server.post("/signup", [
         const hashed_password = await bcrypt.hash(password, 10);
         const username = await generateUsername(email);
 
-        const user = new User({ personal_info: { fullname, email, password: hashed_password, username } });
+       const user = new User({ personal_info: { fullname, email, password: hashed_password, username } });
         await user.save();
         return res.status(201).json(formatDataToSend(user));
     } catch (err) {
         return res.status(500).json({ error: err.message });
-    }
-});
-//server.post("/signup", async (req, res) => {
- //   const { fullname, email, password } = req.body;
+    });
+
+
+//server.post("/signin", [
+//    body('email').isEmail().withMessage('Enter a valid email'),
+//    body('password').notEmpty().withMessage('Password is required')
+//], async (req, res) => {
+//    const errors = validationResult(req);
+//    if (!errors.isEmpty()) {
+ //       return res.status(400).json({ errors: errors.array() });
+//    }
+
+//    const { email, password } = req.body;
+//   try {
+//        const user = await User.findOne({ "personal_info.email": email });
+ //       if (!user) return res.status(403).json({ error: "Email not found" });
+
+ //       const isPasswordValid = !user.google_auth && await bcrypt.compare(passw//ord, user.personal_info.password);
+ //       if (!isPasswordValid) return res.status(403).json({ error: "Incorrect password" });
+
+ //      return res.status(200).json(formatDataToSend(user));
+//    } catch (err) {
+//        return res.status(500).json({ error: err.message });
+//    }
+//});
+server.post("/signin", async (req, res) => {
+    const { email, password } = req.body;
 
     // Manual Validation
-//   const errors = [];
+    const errors = [];
 
-//    if (!fullname || fullname.length < 3) {
- //       errors.push("Fullname must be at least 3 letters long.");
-//    }
-//    if (!email || !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email)) {
-//       errors.push("Enter a valid email.");
-//    }
- //     if (!password || !/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/.test(password)) {
- //       errors.push("Invalid password.");
-//    }
-//    if (errors.length > 0) {
-//        return res.status(400).json({ errors });
-//    }
-
-//    try {
-//        const existingUser = await User.findOne({ "personal_info.email": email });
-//        if (existingUser) return res.status(409).json({ error: "Already have an account" });
-
-  //      const hashed_password = await bcrypt.hash(password, 10);
- //       const username = await generateUsername(email);
-
-//       const user = new User({ personal_info: { fullname, email, password: hashed_password, username } });
-//        await user.save();
- //       return res.status(201).json(formatDataToSend(user));
- //   } catch (err) {
- //       return res.status(500).json({ error: err.message });
- //   });
-
-
-server.post("/signin", [
-    body('email').isEmail().withMessage('Enter a valid email'),
-    body('password').notEmpty().withMessage('Password is required')
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+    // Validate email
+   if (!email || !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email)) {
+        errors.push({ msg: 'Enter a valid email' });
     }
 
-    const { email, password } = req.body;
-   try {
+    // Validate password
+    if (!password) {
+        errors.push({ msg: 'Password is required' });
+  }
+
+    if (errors.length > 0) {
+        return res.status(400).json({ errors });
+    }
+
+    try {
         const user = await User.findOne({ "personal_info.email": email });
         if (!user) return res.status(403).json({ error: "Email not found" });
 
-        const isPasswordValid = !user.google_auth && await bcrypt.compare(passw//ord, user.personal_info.password);
+        const isPasswordValid = !user.google_auth && await bcrypt.compare(password, user.personal_info.password);
         if (!isPasswordValid) return res.status(403).json({ error: "Incorrect password" });
 
-       return res.status(200).json(formatDataToSend(user));
+        return res.status(200).json(formatDataToSend(user));
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
 });
-//server.post("/signin", async (req, res) => {
-//    const { email, password } = req.body;
-
-    // Manual Validation
- //   const errors = [];
-
-    // Validate email
- //  if (!email || !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email)) {
- //       errors.push({ msg: 'Enter a valid email' });
- //   }
-
-    // Validate password
- //   if (!password) {
- //       errors.push({ msg: 'Password is required' });
-//  }
-
-//    if (errors.length > 0) {
-//        return res.status(400).json({ errors });
-//    }
-
- //   try {
-  //      const user = await User.findOne({ "personal_info.email": email });
-   //     if (!user) return res.status(403).json({ error: "Email not found" });
-
- //       const isPasswordValid = !user.google_auth && await bcrypt.compare(password, user.personal_info.password);
-  //      if (!isPasswordValid) return res.status(403).json({ error: "Incorrect password" });
-
-  //      return res.status(200).json(formatDataToSend(user));
- //   } catch (err) {
-  //      return res.status(500).json({ error: err.message });
-  //  }
-//});
 
 
 // Google authentication
