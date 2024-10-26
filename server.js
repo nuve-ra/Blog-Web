@@ -26,7 +26,7 @@ const port = 3000;
 
 // Middleware
 server.use(express.json());
-server.use(cors({ origin: 'https://chipper-sorbet-429651.netlify.app',
+server.use(cors({ origin: 'https://stupendous-kashata-e544fb.netlify.app',
  }));
 
 // Connect to MongoDB
