@@ -25,9 +25,9 @@ let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for pass
 const server = express();
 const port = 3000;
 
-// Middleware
+// Middlewarek
 server.use(express.json());
-server.use(cors({ origin: 'http://localhost:5173' }));
+server.use(cors({ origin: 'https://stupendous-kashata-e544fb.netlify.app' }));
 
 // Connect to MongoDB
 mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
