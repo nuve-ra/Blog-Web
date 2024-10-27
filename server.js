@@ -19,17 +19,15 @@ import Comment from './Schema/Comment.js';
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccountKey),
 });
-
+let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
+let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for password
 // Set up the Express server
 const server = express();
 const port = 3000;
-//express-validator
-
 
 // Middleware
 server.use(express.json());
-server.use(cors({ origin: 'https://stupendous-kashata-e544fb.netlify.app',
- }));
+server.use(cors({ origin: 'http://localhost:5173' }));
 
 // Connect to MongoDB
 mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
@@ -84,12 +82,6 @@ const formatDataToSend = (user) => {
     };
 };
 
-// Generate username
-const generateUsername = async (email) => {
-    let username = email.split("@")[0];
-    const isUsernameExists = await User.exists({ "personal_info.username": username });
-    return isUsernameExists ? username + nanoid().substring(0, 5) : username;
-};
 
 // Error handling middleware
 const errorHandler = (err, req, res, next) => {
@@ -112,59 +104,67 @@ server.get('/get-upload-url', async (req, res) => {
 //    body('email').isEmail().withMessage('Enter a valid email'),
 //    body('password').matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/).withMessage('Invalid password')
 //], async (req, res) => {
- //   const errors = validationResult(req);
- //   if (!errors.isEmpty()) {
- //       return res.status(400).json({ errors: errors.array() });
+//    const errors = validationResult(req);
+//    if (!errors.isEmpty()) {
+//        return res.status(400).json({ errors: errors.array() });
  //   }
 
- //   const { fullname, email, password } = req.body;
+//    const { fullname, email, password } = req.body;
 
-//   try {
- //       const existingUser = await User.findOne({ "personal_info.email": email });
- //       if (existingUser) return res.status(409).json({ error: "Already have an account" });
+//    try {
+//        const existingUser = await User.findOne({ "personal_info.email": email });
+//        if (existingUser) return res.status(409).json({ error: "Already have an account" });
 
- //       const hashed_password = await bcrypt.hash(password, 10);
- //       const username = await generateUsername(email);
+//        const hashed_password = await bcrypt.hash(password, 10);
+//        const username = await generateUsername(email);
 
  //       const user = new User({ personal_info: { fullname, email, password: hashed_password, username } });
- //       await user.save();
+//        await user.save();
  //       return res.status(201).json(formatDataToSend(user));
-//    } catch (err) {
-//        return res.status(500).json({ error: err.message });
+ //   } catch (err) {
+ //       return res.status(500).json({ error: err.message });
  //   }
 //});
+const generateUsername = async (email) => {
+    let username = email.split('@')[0];
+
+    let isUsernameExists = await User.exists({ "personal_info.username": username });
+
+    if (isUsernameExists) {
+        username += nanoid().substring(0, 5);
+    }
+
+    return username;
+}
 server.post("/signup", async (req, res) => {
-   const { fullname, email, password } = req.body;
+    const { fullname, email, password } = req.body;
 
-    // Manual Validation
-   const errors = [];
-
-    if (!fullname || fullname.length > 3) {
-        errors.push("Fullname must be at least 3 letters long.");
+    if (!fullname || fullname.length < 3) {
+        return res.status(403).json({error:"Fullname must be at least 3 letters long."});
     }
-    if (!email || !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email)) {
-       errors.push("Enter a valid email.");
+    if (!email.length) {
+        return res.status(403).json({error:"Enter a valid email."});
     }
-      if (!password || !/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/.test(password)) {
-        errors.push("Invalid password.");
+    if(!emailRegex.test(email)){
+        return res.status(403).json({error:"Email is invalid"})
     }
-    if (errors.length > 0) {
-        return res.status(400).json({ errors });
+    if(!passwordRegex.test(password)){
+        return res.status(403).json({error:"Password should be 6 to 20  characters long with a numeric,1 lowercase and 1 uppercase letters"})
     }
+    bcrypt.hash(password,10,(err,hashed_password)=>{
+        let username=await generateUsername();
+        let user = new User({
+            personal_info:{fullname,email,password:hashed_password,username}
+        })
+        user.save.then((u)=>{
+            return res.status(200).json(formatDataToSend(u))
 
-    try {
-        const existingUser = await User.findOne({ "personal_info.email": email });
-        if (existingUser) return res.status(409).json({ error: "Already have an account" });
+        })        
+    })
+    return res.status(200).json({"status":"okay"});
+})
 
-        const hashed_password = await bcrypt.hash(password, 10);
-        const username = await generateUsername(email);
 
-       const user = new User({ personal_info: { fullname, email, password: hashed_password, username } });
-        await user.save();
-        return res.status(201).json(formatDataToSend(user));
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
-    });
 
 
 //server.post("/signin", [
@@ -172,19 +172,19 @@ server.post("/signup", async (req, res) => {
 //    body('password').notEmpty().withMessage('Password is required')
 //], async (req, res) => {
 //    const errors = validationResult(req);
-//    if (!errors.isEmpty()) {
- //       return res.status(400).json({ errors: errors.array() });
+///    if (!errors.isEmpty()) {
+//        return res.status(400).json({ errors: errors.array() });
 //    }
 
 //    const { email, password } = req.body;
-//   try {
+//    try {
 //        const user = await User.findOne({ "personal_info.email": email });
- //       if (!user) return res.status(403).json({ error: "Email not found" });
+//        if (!user) return res.status(403).json({ error: "Email not found" });
 
- //       const isPasswordValid = !user.google_auth && await bcrypt.compare(passw//ord, user.personal_info.password);
- //       if (!isPasswordValid) return res.status(403).json({ error: "Incorrect password" });
+//        const isPasswordValid = !user.google_auth && await bcrypt.compare(passw//ord, user.personal_info.password);
+//        if (!isPasswordValid) return res.status(403).json({ error: "Incorrect password" });
 
- //      return res.status(200).json(formatDataToSend(user));
+//        return res.status(200).json(formatDataToSend(user));
 //    } catch (err) {
 //        return res.status(500).json({ error: err.message });
 //    }
@@ -193,34 +193,26 @@ server.post("/signin", async (req, res) => {
     const { email, password } = req.body;
 
     // Manual Validation
-    const errors = [];
-
-    // Validate email
-   if (!email || !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email)) {
-        errors.push({ msg: 'Enter a valid email' });
-    }
-
-    // Validate password
-    if (!password) {
-        errors.push({ msg: 'Password is required' });
-  }
-
-    if (errors.length > 0) {
-        return res.status(400).json({ errors });
-    }
-
-    try {
-        const user = await User.findOne({ "personal_info.email": email });
-        if (!user) return res.status(403).json({ error: "Email not found" });
-
-        const isPasswordValid = !user.google_auth && await bcrypt.compare(password, user.personal_info.password);
-        if (!isPasswordValid) return res.status(403).json({ error: "Incorrect password" });
-
-        return res.status(200).json(formatDataToSend(user));
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
-    }
-});
+    user.findOne({"personal_info":email})
+    .then((user)=>{
+        if(!user){
+            return res.status(403).json({error:"Eamil not found"})
+        }
+        bcrypt.compare(password,user.personal_info.password,(err,result)=>{
+            if(err){
+                return res.status(403).json({error:"error occured while login"})
+            }
+            if(!result){
+                return res.status(403).json({error:"Incorrect password"})
+            }else{
+                return res.status(200).json(formatDataToSend(user))
+            }
+        })
+    })
+    .catch(err=>{
+        return res.status(403).json({error:err.message})
+    })
+})
 
 
 // Google authentication
