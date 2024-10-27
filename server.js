@@ -241,9 +241,8 @@ server.post("/google-auth", async (req, res) => {
 
 // Blog routes
 server.get('/latest-blogs', (req, res) => {
-    console.log("Latest-blogs hit")
-    const { page } = req.body;
-    const maxLimit = 5;
+   // let {page} = req.body // Default to page 1
+    let maxLimit = 5;
 
     Blog.find({ draft: false })
         .populate("author", "personal_info.profile_img personal_info.username personal_info.fullname -_id")
@@ -254,6 +253,7 @@ server.get('/latest-blogs', (req, res) => {
         .then(blogs => res.status(200).json({ blogs }))
         .catch(err => res.status(500).json({ error: err.message }));
 });
+
 
 server.get("/all-latest-blog-count", (req, res) => {
     Blog.countDocuments({ draft: false })
