@@ -24,8 +24,7 @@ admin.initializeApp({
 const server = express();
 const port = 3000;
 //express-validator
-//const server= express();
-//server.use(express.json());
+
 
 // Middleware
 server.use(express.json());
