@@ -240,7 +240,8 @@ server.post("/google-auth", async (req, res) => {
 });
 
 // Blog routes
-server.post('/latest-blogs', (req, res) => {
+server.get('/latest-blogs', (req, res) => {
+    console.log("Latest-blogs hit")
     const { page } = req.body;
     const maxLimit = 5;
 
