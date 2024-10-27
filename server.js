@@ -151,7 +151,7 @@ server.post("/signup", async (req, res) => {
     if(!passwordRegex.test(password)){
         return res.status(403).json({error:"Password should be 6 to 20  characters long with a numeric,1 lowercase and 1 uppercase letters"})
     }
-    bcrypt.hash(password,10,(err,hashed_password)=>{
+    bcrypt.hash(password,10,async (err,hashed_password)=>{
         let username=await generateUsername();
         let user = new User({
             personal_info:{fullname,email,password:hashed_password,username}
