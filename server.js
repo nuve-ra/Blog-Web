@@ -156,7 +156,7 @@ server.post("/signup", async (req, res) => {
         let user = new User({
             personal_info:{fullname,email,password:hashed_password,username}
         })
-        user.save.then((u)=>{
+        user.save().then((u)=>{
             return res.status(200).json(formatDataToSend(u))
 
         })        
