@@ -40,7 +40,7 @@ mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
 });
 
 // Set up AWS S3
-const s3 = new S3({
+const s3 = new aws.S3({
     accessKeyId: process.env.ACCESS_KEY_ID,
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION,
