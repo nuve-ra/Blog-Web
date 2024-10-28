@@ -194,7 +194,7 @@ server.post("/signin", async (req, res) => {
     
 
     // Manual Validation
-    User.findOne({"personal_info":email})
+    User.findOne({"personal_info.email":email})
     .then((user)=>{
         if(!user){
             return res.status(403).json({error:"Eamil not found"})
