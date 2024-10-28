@@ -27,7 +27,7 @@ const port = 3000;
 
 // Middlewarek
 server.use(express.json());
-server.use(cors({ origin: 'https://blog-web-ldr0.onrender.com' }));
+server.use(cors({ origin: 'https://blog-it-out.netlify.app/' }));
 
 // Connect to MongoDB
 mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
@@ -241,17 +241,22 @@ server.post("/google-auth", async (req, res) => {
 
 // Blog routes
 server.get('/latest-blogs', (req, res) => {
-   // let {page} = req.body // Default to page 1
-    let maxLimit = 5;
+    let page = parseInt(req.query.page) || 1; // Use query parameter for pagination, default to page 1
+    const maxLimit = 5;
 
     Blog.find({ draft: false })
         .populate("author", "personal_info.profile_img personal_info.username personal_info.fullname -_id")
-        .sort({ "publishedAt": -1 })
+        .sort({ publishedAt: -1 })
         .select("blog_id title des banner activity tags publishedAt -_id")
         .skip((page - 1) * maxLimit)
         .limit(maxLimit)
-        .then(blogs => res.status(200).json({ blogs }))
-        .catch(err => res.status(500).json({ error: err.message }));
+        .then(blogs => {
+            res.status(200).json({ blogs });
+        })
+        .catch(err => {
+            console.error(err); // Log the error for debugging
+            res.status(500).json({ error: 'An error occurred while fetching blogs.' });
+        });
 });
 
 
