@@ -40,12 +40,11 @@ mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
 });
 
 // Set up AWS S3
-const s3 = new aws.S3({
-    region: 'ap-south-1',
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    AWS_SDK_LOAD_CONFIG:process.env.AWS_SDK_JS_SUPRESS_MAINTENANCE__MODE_MESSAGE
-});
+this.s3 = new S3({
+    accessKeyId: process.env.ACCESS_KEY_ID,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
+  });
 
 // Generate upload URL for images
 const generateUploadURL = async () => {
