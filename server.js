@@ -152,7 +152,7 @@ server.post("/signup", async (req, res) => {
         return res.status(403).json({error:"Password should be 6 to 20  characters long with a numeric,1 lowercase and 1 uppercase letters"})
     }
     bcrypt.hash(password,10,async (err,hashed_password)=>{
-        let username=await generateUsername();
+        let username=await generateUsername(email);
         let user = new User({
             personal_info:{fullname,email,password:hashed_password,username}
         })
@@ -211,6 +211,7 @@ server.post("/signin", async (req, res) => {
         })
     })
     .catch(err=>{
+        
         return res.status(403).json({error:err.message})
     })
 })
