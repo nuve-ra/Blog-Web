@@ -27,7 +27,7 @@ const port = 3000;
 
 // Middlewarek
 server.use(express.json());
-server.use(cors({ origin: 'https://blog-it-out.netlify.app' }));
+server.use(cors({ origin: 'https://blog-web-ldr0.onrender.com' }));
 
 // Connect to MongoDB
 mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
