@@ -24,10 +24,10 @@ let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for pass
 // Set up the Express server
 const server = express();
 const port = 3000;
-
+console.log(process.env)
 // Middlewarek
 server.use(express.json());
-server.use(cors({ origin: 'https://blog-it-out.netlify.app' }));
+server.use(cors({ origin: process.env.ORIGIN }));
 
 // Connect to MongoDB
 mongoose.connect(process.env.DB_LOCATION || 'mongodb://127.0.0.1:27017/local', {
@@ -220,8 +220,9 @@ server.post("/google-auth", async (req, res) => {
     const { access_token } = req.body;
     try {
         const decodedUser = await getAuth().verifyIdToken(access_token);
-        const { email, fullname, picture } = decodedUser;
+        const { email, name, picture } = decodedUser;
         const formattedPicture = picture.replace("s96-c", "s384-c");
+        console.log(decodedUser)
 
         let user = await User.findOne({ "personal_info.email": email }).select("personal_info.fullname username personal_info.profile_img google_auth");
 
@@ -229,12 +230,13 @@ server.post("/google-auth", async (req, res) => {
             if (!user.google_auth) return res.status(403).json({ error: "This email was signed up without Google." });
         } else {
             const username = await generateUsername(email);
-            user = new User({ personal_info: { fullname, email, profile_img: formattedPicture, username }, google_auth: true });
+            user = new User({ personal_info: { fullname:name, email, profile_img: formattedPicture, username }, google_auth: true });
             await user.save();
         }
 
         return res.status(200).json(formatDataToSend(user));
     } catch (err) {
+        console.log(err)
         return res.status(500).json({ error: "Failed to authenticate with Google." });
     }
 });
