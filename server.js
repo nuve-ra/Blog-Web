@@ -44,6 +44,7 @@ const s3 = new aws.S3({
     region: 'ap-south-1',
     accessKeyId: process.env.AWS_ACCESS_KEY,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    AWS_SDK_LOAD_CONFIG:process.env.AWS_SDK_JS_SUPRESS_MAINTENANCE__MODE_MESSAGE
 });
 
 // Generate upload URL for images
@@ -191,6 +192,7 @@ server.post("/signup", async (req, res) => {
 //});
 server.post("/signin", async (req, res) => {
     const { email, password } = req.body;
+    
 
     // Manual Validation
     user.findOne({"personal_info":email})
