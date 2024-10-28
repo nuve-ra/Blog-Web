@@ -23,7 +23,7 @@ let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for e
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for password
 // Set up the Express server
 const server = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 console.log(process.env)
 // Middlewarek
 server.use(express.json());
