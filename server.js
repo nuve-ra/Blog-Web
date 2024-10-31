@@ -73,6 +73,7 @@ const verifyJWT = (req, res, next) => {
 
 // Format user data for response
 const formatDataToSend = (user) => {
+    console.log("user",user)
     const access_token = jwt.sign({ id: user._id }, process.env.SECRET_ACCESS_KEY);
     return {
         access_token,
@@ -211,7 +212,7 @@ server.post("/signin", async (req, res) => {
         })
     })
     .catch(err=>{
-        
+        console.log("err",err)
         return res.status(403).json({error:err.message})
     })
 })
@@ -226,7 +227,7 @@ server.post("/google-auth", async (req, res) => {
         const formattedPicture = picture.replace("s96-c", "s384-c");
         console.log(decodedUser)
 
-        let user = await User.findOne({ "personal_info.email": email }).select("personal_info.fullname username personal_info.profile_img google_auth");
+        let user = await User.findOne({ "personal_info.email": email }).select("personal_info.fullname personal_info.username personal_info.profile_img google_auth");
 
         if (user) {
             if (!user.google_auth) return res.status(403).json({ error: "This email was signed up without Google." });
@@ -330,6 +331,7 @@ server.post('/search-blog-counts',(req,res)=>{
 })
 server.post("/get-profile", (req, res) => {
     let { username } = req.body;
+    console.log(req.body)
     User.findOne({ "personal_info.username": username })
         .select("-personal_info.password -google_auth -updateAt -blogs")
         .then(user => {
@@ -384,22 +386,24 @@ server.post("/create-blog", verifyJWT, (req, res) => {
 
 server.post("/like-blog", verifyJWT, async (req, res) => {
     const user_id = req.user;
-    const { _id, likedByUser } = req.body;
-    const incrementVal = !likedByUser ? 1 : -1;
+    console.log("blog",req.body)
+    const { blog_id, isLikedByUser} = req.body;
+    const incrementVal = !isLikedByUser ? 1 : -1;
 
     try {
-        const blog = await Blog.findOneAndUpdate({ _id }, { $inc: { "activity.total_likes": incrementVal } });
+        const blog = await Blog.findOneAndUpdate({ blog_id }, { $inc: { "activity.total_likes": incrementVal } });
         if (!blog) return res.status(404).json({ error: "Blog not found" });
 
-        if (!likedByUser) {
-            const like = new Notification({ type: "like", blog: _id, notification_for: blog.author, user: user_id });
+        if (!isLikedByUser) {
+            const like = new Notification({ type: "like", blog: blog._id, notification_for: blog.author, user: user_id });
             await like.save();
             return res.status(200).json({ liked_by_user: true });
         } else {
-            await Notification.findOneAndDelete({ user: user_id, blog: _id, type: "like" });
+            await Notification.findOneAndDelete({ user: user_id, blog: blog._id, type: "like" });
             return res.status(200).json({ liked_by_user: false });
         }
     } catch (err) {
+        console.log(err)
         return res.status(500).json({ error: err.message });
     }
 });
@@ -429,11 +433,15 @@ server.post('/get-blog', async (req, res) => {
 
 // Check if liked by user
 server.post("/isLiked-by-user", verifyJWT, async (req, res) => {
+
+    console.log("like here",req.body)
     const user_id = req.user;
-    const { _id } = req.body;
+    const { blog_id } = req.body;
+
+    const blog=await Blog.findOne({blog_id})
 
     try {
-        const likeExists = await Notification.exists({ user: user_id, blog: _id, type: "like" });
+        const likeExists = await Notification.exists({ user: user_id, blog:blog. _id, type: "like" });
         return res.status(200).json({ liked_by_user: !!likeExists });
     } catch (err) {
         return res.status(500).json({ error: err.message });
@@ -479,11 +487,13 @@ server.post("/add-comment", verifyJWT, async (req, res) => {
 });
 
 // Get blog comments
-server.post("/get-blog-comments", (req, res) => {
+server.post("/get-blog-comments", async (req, res) => {
     const { blog_id, skip } = req.body;
     const maxLimit = 5;
 
-    Comment.find({ blog_id, isReply: false })
+    const blog=await Blog.findOne({blog_id:blog_id})
+
+    Comment.find({ blog_id:blog._id, isReply: false })
         .populate("commented_by", "personal_info.username personal_info.fullname personal_info.profile_img")
         .skip(skip)
         .limit(maxLimit)
